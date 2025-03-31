@@ -18,102 +18,248 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'reviews']);
-        
-        // Filter by category
-        if ($request->has('category')) {
-            $query->whereHas('category', function($q) use ($request) {
-                $q->where('slug', $request->category);
-            });
-        }
-        
-        // Filter by scent profile
-        if ($request->has('scent')) {
-            $query->whereHas('scentProfiles', function($q) use ($request) {
-                $q->where('name', $request->scent);
-            });
-        }
-        
+        $query = Product::with(['category', 'primaryImage'])
+            ->active();
+
         // Filter by mood
         if ($request->has('mood')) {
             $query->whereHas('moods', function($q) use ($request) {
-                $q->where('name', $request->mood);
+                $q->where('slug', $request->mood);
             });
         }
-        
-        // Filter by product type
-        if ($request->has('type')) {
-            $query->where('product_type', $request->type);
-        }
-        
-        // Search
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%")
-                  ->orWhere('short_description', 'LIKE', "%{$search}%");
+
+        // Filter by scent profile
+        if ($request->has('scent')) {
+            $query->whereHas('scentProfiles', function($q) use ($request) {
+                $q->where('slug', $request->scent);
             });
         }
-        
-        // Sort
-        $sort = $request->get('sort', 'latest');
+
+        // Filter by price range
+        if ($request->has('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+        if ($request->has('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        // Sort products
+        $sort = $request->get('sort', 'featured');
         switch ($sort) {
-            case 'price-low':
+            case 'price_asc':
                 $query->orderBy('price', 'asc');
                 break;
-            case 'price-high':
+            case 'price_desc':
                 $query->orderBy('price', 'desc');
                 break;
-            case 'popular':
-                $query->orderBy('review_count', 'desc');
-                break;
-            case 'rating':
-                $query->orderBy('average_rating', 'desc');
-                break;
-            case 'latest':
-            default:
+            case 'newest':
                 $query->latest();
                 break;
+            case 'popular':
+                $query->orderBy('sales_count', 'desc');
+                break;
+            default:
+                $query->featured();
         }
-        
+
         $products = $query->paginate(12);
-        $categories = Category::all();
-        $scentProfiles = ScentProfile::all();
-        $moods = Mood::all();
-        
-        return view('products.index', compact(
-            'products', 
-            'categories', 
-            'scentProfiles', 
-            'moods'
-        ));
+
+        return view('products.index', compact('products'));
     }
-    
-    public function show($slug)
+
+    public function show(Product $product)
     {
-        $product = Product::where('slug', $slug)
-            ->with([
-                'category', 
-                'ingredients', 
-                'benefits', 
-                'additionalImages', 
-                'scentProfiles', 
-                'moods',
-                'reviews' => function($query) {
-                    $query->with('user')->latest();
-                }
-            ])
-            ->firstOrFail();
-        
-        $relatedProducts = Product::where('category_id', $product->category_id)
-            ->where('id', '!=', $product->id)
-            ->take(4)
-            ->get();
-            
+        $product->load([
+            'category',
+            'images',
+            'moods',
+            'scentProfiles',
+            'customizationOptions',
+            'essentialOilProperties'
+        ]);
+
+        $relatedProducts = $product->relatedProducts;
+
         return view('products.show', compact('product', 'relatedProducts'));
     }
-    
+
+    public function create()
+    {
+        $moods = Mood::all();
+        $scentProfiles = ScentProfile::all();
+        return view('products.create', compact('moods', 'scentProfiles'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'moods' => 'array',
+            'moods.*' => 'exists:moods,id',
+            'scent_profiles' => 'array',
+            'scent_profiles.*' => 'exists:scent_profiles,id',
+            'images.*' => 'image|mimes:jpeg,png,jpg|max:2048'
+        ]);
+
+        $product = Product::create($validated);
+
+        // Attach moods with effectiveness
+        if ($request->has('moods')) {
+            foreach ($request->moods as $moodId => $effectiveness) {
+                $product->moods()->attach($moodId, ['effectiveness' => $effectiveness]);
+            }
+        }
+
+        // Attach scent profiles with intensity
+        if ($request->has('scent_profiles')) {
+            foreach ($request->scent_profiles as $profileId => $intensity) {
+                $product->scentProfiles()->attach($profileId, ['intensity' => $intensity]);
+            }
+        }
+
+        // Handle image uploads
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $index => $image) {
+                $path = $image->store('products', 'public');
+                $product->images()->create([
+                    'path' => $path,
+                    'alt_text' => $request->input("images_alt.{$index}", ''),
+                    'sort_order' => $index,
+                    'is_primary' => $index === 0
+                ]);
+            }
+        }
+
+        return redirect()->route('products.show', $product)
+            ->with('success', 'Product created successfully.');
+    }
+
+    public function edit(Product $product)
+    {
+        $product->load(['moods', 'scentProfiles', 'images']);
+        $moods = Mood::all();
+        $scentProfiles = ScentProfile::all();
+        return view('products.edit', compact('product', 'moods', 'scentProfiles'));
+    }
+
+    public function update(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'moods' => 'array',
+            'moods.*' => 'exists:moods,id',
+            'scent_profiles' => 'array',
+            'scent_profiles.*' => 'exists:scent_profiles,id',
+            'images.*' => 'image|mimes:jpeg,png,jpg|max:2048'
+        ]);
+
+        $product->update($validated);
+
+        // Sync moods with effectiveness
+        if ($request->has('moods')) {
+            $product->moods()->sync(
+                collect($request->moods)->mapWithKeys(function($effectiveness, $moodId) {
+                    return [$moodId => ['effectiveness' => $effectiveness]];
+                })->all()
+            );
+        }
+
+        // Sync scent profiles with intensity
+        if ($request->has('scent_profiles')) {
+            $product->scentProfiles()->sync(
+                collect($request->scent_profiles)->mapWithKeys(function($intensity, $profileId) {
+                    return [$profileId => ['intensity' => $intensity]];
+                })->all()
+            );
+        }
+
+        // Handle image uploads
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $index => $image) {
+                $path = $image->store('products', 'public');
+                $product->images()->create([
+                    'path' => $path,
+                    'alt_text' => $request->input("images_alt.{$index}", ''),
+                    'sort_order' => $index,
+                    'is_primary' => $index === 0
+                ]);
+            }
+        }
+
+        return redirect()->route('products.show', $product)
+            ->with('success', 'Product updated successfully.');
+    }
+
+    public function destroy(Product $product)
+    {
+        // Delete associated images
+        foreach ($product->images as $image) {
+            Storage::delete($image->path);
+            Storage::delete(str_replace('.', '_thumb.', $image->path));
+        }
+
+        $product->delete();
+
+        return redirect()->route('products.index')
+            ->with('success', 'Product deleted successfully.');
+    }
+
+    public function search(Request $request)
+    {
+        $query = $request->get('q');
+        
+        $products = Product::with(['category', 'primaryImage'])
+            ->where(function($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                  ->orWhere('description', 'like', "%{$query}%")
+                  ->orWhereHas('moods', function($q) use ($query) {
+                      $q->where('name', 'like', "%{$query}%");
+                  })
+                  ->orWhereHas('scentProfiles', function($q) use ($query) {
+                      $q->where('name', 'like', "%{$query}%");
+                  });
+            })
+            ->active()
+            ->take(10)
+            ->get();
+
+        return response()->json($products);
+    }
+
+    public function getMoodRecommendations(Mood $mood)
+    {
+        $products = Product::with(['primaryImage'])
+            ->whereHas('moods', function($query) use ($mood) {
+                $query->where('id', $mood->id);
+            })
+            ->active()
+            ->take(4)
+            ->get();
+
+        return view('products.recommendations', compact('products', 'mood'));
+    }
+
+    public function getScentRecommendations(ScentProfile $profile)
+    {
+        $products = Product::with(['primaryImage'])
+            ->whereHas('scentProfiles', function($query) use ($profile) {
+                $query->where('id', $profile->id);
+            })
+            ->active()
+            ->take(4)
+            ->get();
+
+        return view('products.recommendations', compact('products', 'profile'));
+    }
+
     public function storeReview(Request $request, Product $product)
     {
         $validated = $request->validate([

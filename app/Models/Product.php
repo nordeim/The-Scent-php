@@ -71,13 +71,15 @@ class Product extends Model
     public function scentProfiles()
     {
         return $this->belongsToMany(ScentProfile::class, 'product_scent_profiles')
-                    ->withPivot('intensity');
+                    ->withPivot('intensity')
+                    ->withTimestamps();
     }
 
     public function moods()
     {
         return $this->belongsToMany(Mood::class, 'product_moods')
-                    ->withPivot('effectiveness');
+                    ->withPivot('effectiveness')
+                    ->withTimestamps();
     }
 
     public function reviews()
@@ -180,5 +182,82 @@ class Product extends Model
     public function scopeLowStock($query)
     {
         return $query->where('stock', '<=', 10);
+    }
+
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class)->ordered();
+    }
+
+    public function primaryImage()
+    {
+        return $this->hasOne(ProductImage::class)->primary();
+    }
+
+    public function getMoodEffectivenessAttribute()
+    {
+        return $this->moods->mapWithKeys(function($mood) {
+            return [$mood->id => $mood->effectiveness];
+        });
+    }
+
+    public function getScentIntensityAttribute()
+    {
+        return $this->scentProfiles->mapWithKeys(function($profile) {
+            return [$profile->id => $profile->intensity];
+        });
+    }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->primaryImage?->url ?? $this->images->first()?->url;
+    }
+
+    public function getThumbnailUrlAttribute()
+    {
+        return $this->primaryImage?->thumbnail_url ?? $this->images->first()?->thumbnail_url;
+    }
+
+    public function getGalleryImagesAttribute()
+    {
+        return $this->images->map(function($image) {
+            return [
+                'url' => $image->url,
+                'thumbnail' => $image->thumbnail_url,
+                'alt' => $image->alt_text
+            ];
+        });
+    }
+
+    public function getMoodRecommendationsAttribute()
+    {
+        return $this->moods()
+            ->orderByPivot('effectiveness', 'desc')
+            ->take(3)
+            ->get();
+    }
+
+    public function getScentRecommendationsAttribute()
+    {
+        return $this->scentProfiles()
+            ->orderByPivot('intensity', 'desc')
+            ->take(3)
+            ->get();
+    }
+
+    public function getRelatedProductsAttribute()
+    {
+        return static::where('id', '!=', $this->id)
+            ->where(function($query) {
+                $query->whereHas('moods', function($q) {
+                    $q->whereIn('id', $this->moods->pluck('id'));
+                })
+                ->orWhereHas('scentProfiles', function($q) {
+                    $q->whereIn('id', $this->scentProfiles->pluck('id'));
+                });
+            })
+            ->active()
+            ->take(4)
+            ->get();
     }
 } 
