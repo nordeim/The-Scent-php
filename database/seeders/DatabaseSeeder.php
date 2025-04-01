@@ -1,25 +1,18 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+namespace Database\Seeders;
 
-return new class extends Migration
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+
+class DatabaseSeeder extends Seeder
 {
-    public function up()
+    public function run(): void
     {
-        if (!Schema::hasTable('settings')) {
-            Schema::create('settings', function (Blueprint $table) {
-                $table->id();
-                $table->string('key')->unique();
-                $table->text('value')->nullable();
-                $table->timestamps();
-
-                $table->index('key', 'idx_settings_key');
-            });
-
-            // Insert default settings
-            $defaultSettings = [
+        // Insert default settings if they don't exist
+        if (DB::table('settings')->count() === 0) {
+            DB::table('settings')->insert([
                 ['key' => 'site_name', 'value' => 'Aromatherapy Store'],
                 ['key' => 'site_description', 'value' => 'Your one-stop shop for aromatherapy products'],
                 ['key' => 'contact_email', 'value' => 'contact@aromatherapystore.com'],
@@ -37,14 +30,27 @@ return new class extends Migration
                 ['key' => 'featured_articles_count', 'value' => '3'],
                 ['key' => 'popular_products_count', 'value' => '8'],
                 ['key' => 'popular_tags_count', 'value' => '10']
-            ];
+            ]);
+        }
 
-            DB::table('settings')->insert($defaultSettings);
+        // Create default user roles if they don't exist
+        if (DB::table('user_roles')->count() === 0) {
+            DB::table('user_roles')->insert([
+                ['id' => 1, 'name' => 'customer'],
+                ['id' => 2, 'name' => 'admin']
+            ]);
+        }
+
+        // Create default admin user if it doesn't exist
+        if (!DB::table('users')->where('email', 'admin@aromatherapystore.com')->exists()) {
+            DB::table('users')->insert([
+                'name' => 'Admin',
+                'email' => 'admin@aromatherapystore.com',
+                'password' => Hash::make('change_this_password'),
+                'email_verified_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
         }
     }
-
-    public function down()
-    {
-        Schema::dropIfExists('settings');
-    }
-};
+}
