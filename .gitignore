@@ -2,3 +2,4 @@ vendor
 composer.lock
 .git
 .env
+storage/psysh/psysh_history

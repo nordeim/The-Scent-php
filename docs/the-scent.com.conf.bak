@@ -1,0 +1,13 @@
+<VirtualHost *:80>
+    ServerName the-scent.com
+    DocumentRoot /cdrom/project/aromatherapy-store/public
+
+    <Directory /cdrom/project/aromatherapy-store/public>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/aromatherapy-store-error.log
+    CustomLog ${APACHE_LOG_DIR}/aromatherapy-store-access.log combined
+</VirtualHost>
