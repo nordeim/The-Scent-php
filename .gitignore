@@ -3,3 +3,4 @@ composer.lock
 .git
 .env
 storage/psysh/psysh_history
+node_modules
