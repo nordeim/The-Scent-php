@@ -1,4 +1,5 @@
 https://github.com/copilot/share/c8314216-4120-80d3-a052-fe01842941b0  
+https://github.com/copilot/share/c8314216-4120-80d3-a052-fe01842941b0  
 Ah, now I have the complete schema! Let's update those newly created migration files to match your schema exactly:
 
 ```php name=database/migrations/2025_04_01_143507_create_cart_items_table.php
