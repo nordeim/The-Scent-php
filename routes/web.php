@@ -24,9 +24,11 @@ Route::get('/scent-profiles', [ScentProfileController::class, 'index'])->name('s
 Route::get('/scent-profiles/{profile:slug}', [ScentProfileController::class, 'show'])->name('scent-profiles.show');
 
 // Cart
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
-Route::delete('/cart/remove/{item}', [CartController::class, 'remove'])->name('cart.remove');
+Route::group(['middleware' => ['web']], function () {
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
+    Route::delete('/cart/remove/{item}', [CartController::class, 'remove'])->name('cart.remove');
+});
 
 // Checkout
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
