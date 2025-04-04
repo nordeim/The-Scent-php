@@ -17,7 +17,24 @@
     @endif
 
     @if(isset($cartItems) && $cartItems->count() > 0)
-        <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div x-data="{ 
+            updateQuantity(itemId, quantity) {
+                fetch(`/cart/quantity/${itemId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ quantity })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.dispatchEvent(new CustomEvent('cart-updated', { 
+                        detail: { count: data.count }
+                    }));
+                });
+            }
+        }" class="bg-white rounded-lg shadow overflow-hidden">
             <table class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
@@ -52,15 +69,24 @@
                                 ${{ number_format($item->product->price, 2) }}
                             </td>
                             <td class="px-6 py-4">
-                                <form action="{{ route('cart.updateQuantity', $item->id) }}" method="POST" class="flex items-center">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" 
-                                           class="w-20 rounded border-gray-300">
-                                    <button type="submit" class="ml-2 text-sm text-blue-600 hover:text-blue-800">
-                                        Update
+                                <div class="flex items-center">
+                                    <button @click="updateQuantity({{ $item->id }}, Math.max(1, $refs.qty{{ $item->id }}.value - 1))"
+                                            class="p-1 hover:bg-gray-100 rounded">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                        </svg>
                                     </button>
-                                </form>
+                                    <input type="number" x-ref="qty{{ $item->id }}"
+                                           value="{{ $item->quantity }}" min="1"
+                                           @change="updateQuantity({{ $item->id }}, $event.target.value)"
+                                           class="w-16 text-center mx-2 rounded border-gray-300">
+                                    <button @click="updateQuantity({{ $item->id }}, parseInt($refs.qty{{ $item->id }}.value) + 1)"
+                                            class="p-1 hover:bg-gray-100 rounded">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                        </svg>
+                                    </button>
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 ${{ number_format($item->subtotal, 2) }}

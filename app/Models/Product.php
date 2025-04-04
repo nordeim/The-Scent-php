@@ -23,7 +23,18 @@ class Product extends Model
         'price' => 'decimal:2',
         'average_rating' => 'decimal:2',
         'stock' => 'integer',
-        'review_count' => 'integer'
+        'review_count' => 'integer',
+        'benefits' => 'array',
+        'ingredients' => 'array',
+        'is_natural' => 'boolean',
+        'stress_relief_level' => 'integer'
+    ];
+
+    protected $appends = [
+        'formatted_price',
+        'average_rating',
+        'stress_relief_score',
+        'wellness_benefits'
     ];
 
     /**
@@ -260,4 +271,29 @@ class Product extends Model
             ->take(4)
             ->get();
     }
-} 
+
+    public function getWellnessBenefitsAttribute()
+    {
+        return [
+            'stress_relief' => $this->stress_relief_level,
+            'mood_enhancement' => $this->moods()->avg('effectiveness'),
+            'aromatherapy_rating' => $this->calculateAromatherapyScore(),
+            'natural_score' => $this->calculateNaturalScore()
+        ];
+    }
+
+    protected function calculateAromatherapyScore()
+    {
+        $baseScore = $this->scentProfiles()->avg('intensity');
+        $moodScore = $this->moods()->avg('effectiveness');
+        return round(($baseScore + $moodScore) / 2, 1);
+    }
+
+    protected function calculateNaturalScore()
+    {
+        return $this->is_natural ? 100 : 
+               (count($this->ingredients) > 0 ? 
+                round(collect($this->ingredients)->where('natural', true)->count() / count($this->ingredients) * 100) : 
+                0);
+    }
+}
