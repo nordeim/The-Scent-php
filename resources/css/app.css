@@ -1,3 +1,63 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+    .perspective-card {
+        @apply relative transform-gpu will-change-transform;
+        transform-style: preserve-3d;
+        perspective: 1000px;
+    }
+    
+    .mobile-optimized-touch {
+        @apply touch-pan-y select-none;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Responsive typography */
+    .text-fluid {
+        @apply text-base md:text-lg lg:text-xl;
+        font-size: clamp(1rem, 2.5vw, 1.25rem);
+    }
+    
+    /* Optimized animations */
+    .animate-smooth {
+        @apply transition-all duration-300 motion-reduce:transition-none;
+    }
+}
+
+@layer utilities {
+    /* Accessibility */
+    .focus-visible {
+        @apply outline-none ring-2 ring-sage-500 ring-offset-2;
+    }
+    
+    /* Loading states */
+    .loading-overlay {
+        @apply absolute inset-0 bg-white/80 backdrop-blur-sm 
+               flex items-center justify-center z-10;
+    }
+    
+    /* Error states */
+    .error-shake {
+        animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+    }
+}
+
+/* A11y animations */
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* Performance optimizations */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

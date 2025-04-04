@@ -1,5 +1,54 @@
 *the-scent.com*
 
+```bash
+# First install/update dependencies
+# Clear NPM cache if needed
+npm cache clean --force
+
+# Clear node_modules and lock files to ensure clean state
+rm -rf node_modules package-lock.json
+npm install
+
+rm -rf vendor composer.lock
+composer install
+
+# Build frontend assets
+npm run build
+
+# Clear all Laravel caches as you mentioned
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan optimize:clear
+
+# Rebuild autoloader
+composer dump-autoload
+
+# Link storage
+php artisan storage:link
+
+# Optional but recommended for production
+php artisan optimize
+php artisan view:cache
+php artisan config:cache
+
+# If using route model binding
+php artisan route:cache
+```
+
+```bash
+chmod -R 775 storage
+chmod -R 775 bootstrap/cache
+```
+
+cat .env
+```
+APP_ENV=production
+APP_DEBUG=false
+VITE_APP_ENV=production
+```
+
 Based on the Laravel project structure and the HTML output, the main landing page is composed of several key files:
 
 1. **Layout Template**:
