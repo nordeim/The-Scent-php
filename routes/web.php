@@ -7,6 +7,7 @@ use App\Http\Controllers\MoodController;
 use App\Http\Controllers\ScentProfileController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\NewsletterController;
 
 // Home
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -33,3 +34,5 @@ Route::group(['middleware' => ['web']], function () {
 // Checkout
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
+
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');

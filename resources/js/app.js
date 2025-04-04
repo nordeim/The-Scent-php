@@ -1,4 +1,11 @@
 import './bootstrap';
+import './smooth-scroll';
+import './animations';
+import './parallax'; // Import parallax script
+
+// Import Font Awesome
+import '@fortawesome/fontawesome-free/css/all.css';
+
 import Alpine from 'alpinejs/dist/module.esm';
 import intersect from '@alpinejs/intersect/dist/module.esm';
 import focus from '@alpinejs/focus/dist/module.esm';
@@ -48,4 +55,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('img.lazy').forEach(img => {
         imageObserver.observe(img);
     });
+});
+
+// Initialize Alpine.js
+document.addEventListener('alpine:init', () => {
+    // Add any global Alpine.js data or methods here
+});
+
+// Add any other initialization code here
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize any other scripts or components
+    // Parallax is initialized within its own file on DOMContentLoaded
 });

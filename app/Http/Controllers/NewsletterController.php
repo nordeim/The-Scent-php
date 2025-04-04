@@ -3,28 +3,51 @@
 namespace App\Http\Controllers;
 
 use App\Models\NewsletterSubscription;
+use App\Models\Subscriber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class NewsletterController extends Controller
 {
+    /**
+     * Handle the newsletter subscription request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function subscribe(Request $request)
     {
-        $validated = $request->validate([
-            'email' => 'required|email|unique:newsletter_subscriptions,email'
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|unique:subscribers,email',
         ]);
-        
-        $subscription = NewsletterSubscription::create([
-            'email' => $validated['email'],
-            'status' => 'active'
-        ]);
-        
-        // Send welcome email
-        Mail::to($subscription->email)->send(new \App\Mail\NewsletterWelcome($subscription));
-        
-        return response()->json([
-            'message' => 'Thank you for subscribing to our newsletter!'
-        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $subscriber = Subscriber::create($validator->validated());
+
+            // Optional: Send a confirmation email here
+
+            return response()->json([
+                'message' => 'Successfully subscribed!',
+                'subscriber' => $subscriber,
+            ], 201);
+
+        } catch (\Exception $e) {
+            // Log the error
+            logger()->error('Newsletter subscription failed: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'An unexpected error occurred. Please try again later.',
+            ], 500);
+        }
     }
     
     public function unsubscribe(Request $request)

@@ -24,6 +24,19 @@
     .animate-smooth {
         @apply transition-all duration-300 motion-reduce:transition-none;
     }
+    
+    .btn-primary {
+        @apply px-6 py-3 bg-sage-600 text-white rounded-xl font-medium hover:bg-sage-700 transition-colors;
+    }
+    .btn-secondary {
+        @apply px-6 py-3 bg-white text-sage-600 rounded-xl font-medium hover:bg-sage-100 transition-colors;
+    }
+    .btn-outline {
+        @apply px-6 py-3 border border-sage-600 text-sage-600 rounded-xl font-medium hover:bg-sage-600 hover:text-white transition-colors;
+    }
+    .nav-link {
+        @apply text-sage-700 hover:text-sage-600 transition-colors;
+    }
 }
 
 @layer utilities {
@@ -41,6 +54,14 @@
     /* Error states */
     .error-shake {
         animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 1s ease-out forwards;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 }
 

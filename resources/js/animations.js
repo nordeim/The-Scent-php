@@ -9,7 +9,14 @@ const debounce = (fn, ms) => {
 
 export const productShowcase = () => ({
     products: [
-        // Product data here
+        { id: 1, name: 'Lavender Bliss Oil', price: '$24.99', image: '/images/products/product-1.jpg' },
+        { id: 2, name: 'Eucalyptus Mist Soap', price: '$12.50', image: '/images/products/product-2.jpg' },
+        { id: 3, name: 'Peppermint Revive Oil', price: '$22.99', image: '/images/products/product-3.jpg' },
+        { id: 4, name: 'Chamomile Calm Soap', price: '$14.00', image: '/images/products/product-4.jpg' },
+        { id: 5, name: 'Rose Harmony Oil', price: '$28.99', image: '/images/products/product-5.jpg' },
+        { id: 6, name: 'Tea Tree Cleanse Soap', price: '$13.50', image: '/images/products/product-6.jpg' },
+        { id: 7, name: 'Citrus Burst Oil', price: '$21.99', image: '/images/products/product-7.jpg' },
+        { id: 8, name: 'Sandalwood Serenity Soap', price: '$15.00', image: '/images/products/product-8.jpg' }
     ],
     
     handleHover: debounce((e, el) => {
@@ -73,6 +80,13 @@ export const productShowcase = () => ({
         document.querySelectorAll('.product-card').forEach(card => {
             observer.observe(card);
         });
+    },
+    
+    // Placeholder for addToCart functionality
+    addToCart(productId) {
+        console.log(`Product ${productId} added to cart`);
+        // Dispatch event for cart update (optional)
+        // Alpine.dispatch(document, 'cart-updated');
     }
 });
 
