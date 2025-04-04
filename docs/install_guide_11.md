@@ -1,3 +1,4 @@
+```bash
 # Clear all Laravel caches
 php artisan cache:clear
 php artisan config:clear
@@ -12,8 +13,10 @@ composer dump-autoload
 
 # Regenerate optimized files for production
 php artisan optimize
+```
 
 ---
+```bash
 php artisan config:clear
 php artisan route:clear
 php artisan view:clear
@@ -21,3 +24,4 @@ php artisan cache:clear
 composer dump-autoload
 
 php artisan serve
+```
