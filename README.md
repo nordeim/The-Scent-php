@@ -101,7 +101,7 @@ The structure we're seeing in the browser shows:
 ---
 # A Technical Analysis of The-Scent-php: Implementation of a Laravel-based E-commerce Framework
 
-This research paper presents a comprehensive analysis of The-Scent-php, a [Laravel 12](https://laravel.com/docs/12.x/documentation) based e-commerce framework implementation. Through systematic examination of the verifiable repository content, we analyze the project's architectural decisions, implementation patterns, and technical configurations. The study focuses on the foundational elements established in the codebase, highlighting both the current implementation state and potential development pathways.
+This research paper presents a comprehensive analysis of The-Scent-php, a [PHP](https://php.new/) [Laravel 12](https://laravel.com/docs/12.x/documentation) based e-commerce framework implementation. Through systematic examination of the verifiable repository content, we analyze the project's architectural decisions, implementation patterns, and technical configurations. The study focuses on the foundational elements established in the codebase, highlighting both the current implementation state and potential development pathways.
 
 ## 1. Introduction
 
